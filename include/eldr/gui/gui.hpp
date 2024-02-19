@@ -8,17 +8,11 @@ namespace eldr {
 
 class EldrGUI {
 public:
-  EldrGUI(int width, int height, std::string name)
-    : width_{ width }, height_{ height }, window_name_{ name } {};
-
-  //~EldrGUI();
-
-  // EldrGUI(const EldrGUI &)            = delete;
-  // EldrGUI &operator=(const EldrGUI &) = delete;
+  EldrGUI() = delete;
+  EldrGUI(int width, int height, std::string name);
+  ~EldrGUI();
 
   void display();
-  void init();
-  void terminate();
 
   inline bool        shouldClose() { return glfwWindowShouldClose(window_); }
   inline GLFWwindow* getGLFWwindow() { return window_; };
@@ -28,8 +22,8 @@ private:
   const int   height_;
   std::string window_name_;
 
-  std::unique_ptr<vk::VulkanWrapper> vk_wrapper_;
-
   GLFWwindow* window_;
+
+  std::unique_ptr<vk::VulkanWrapper> vk_wrapper_;
 };
 } // namespace eldr

@@ -8,12 +8,11 @@
 namespace eldr {
 static void glfwErrorCallback(int error, const char* description)
 {
-  fprintf(stderr, "GLFW Error %d: %s", error, description);
+  spdlog::error("GLFW Error %d: %s", error, description);
 }
 
-void EldrGUI::display() { vk_wrapper_->drawFrame(); }
-
-void EldrGUI::init()
+EldrGUI::EldrGUI(int width, int height, std::string name)
+  : width_{ width }, height_{ height }, window_name_{ name }
 {
   // Initialize GLFW
   glfwSetErrorCallback(glfwErrorCallback);
@@ -40,12 +39,14 @@ void EldrGUI::init()
     extensions.push_back(glfw_extensions[i]);
 
   vk_wrapper_ = std::make_unique<vk::VulkanWrapper>(window_, extensions);
-}
+};
 
-void EldrGUI::terminate()
+EldrGUI::~EldrGUI()
 {
   glfwDestroyWindow(window_);
   glfwTerminate();
 }
+
+void EldrGUI::display() { vk_wrapper_->drawFrame(); }
 
 } // Namespace eldr
