@@ -1,6 +1,4 @@
 #include <eldr/render/scene.hpp>
-#include <glm/glm.hpp>
-#include <vector>
 
 namespace eldr {
 

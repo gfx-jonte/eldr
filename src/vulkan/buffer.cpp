@@ -4,6 +4,7 @@
 
 namespace eldr {
 namespace vk {
+
 Buffer::Buffer()
   : device_(nullptr), buffer_(VK_NULL_HANDLE), buffer_memory_(VK_NULL_HANDLE)
 {
@@ -39,7 +40,7 @@ Buffer::Buffer(const Device* device, const BufferInfo& buffer_info)
   vkBindBufferMemory(device_->logical(), buffer_, buffer_memory_, 0);
 }
 
-Buffer::Buffer(const Device* device, const std::vector<VkVertex>& vertices,
+Buffer::Buffer(const Device* device, const std::vector<Vertex>& vertices,
                CommandPool& command_pool)
   : Buffer(device, { sizeof(vertices[0]) * vertices.size(),
                      VK_BUFFER_USAGE_TRANSFER_DST_BIT |

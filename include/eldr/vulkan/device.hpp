@@ -4,8 +4,19 @@
 #include <eldr/vulkan/instance.hpp>
 #include <eldr/vulkan/surface.hpp>
 
+#include <optional>
+
 namespace eldr {
 namespace vk {
+struct QueueFamilyIndices {
+  std::optional<uint32_t> graphics_family;
+  std::optional<uint32_t> present_family;
+  bool                    isComplete()
+  {
+    return graphics_family.has_value() && present_family.has_value();
+  }
+};
+
 class Device {
 public:
   Device(const Instance&, const Surface&);

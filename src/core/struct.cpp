@@ -4,9 +4,7 @@
 #include <eldr/core/logger.hpp>
 #include <eldr/core/struct.hpp>
 #include <eldr/core/hash.hpp>
-
-#include <glm/common.hpp>
-#include <glm/glm.hpp>
+#include <eldr/core/math.hpp>
 
 #include <cmath>
 

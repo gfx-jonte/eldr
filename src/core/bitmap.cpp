@@ -15,7 +15,7 @@
 namespace eldr {
 
 Bitmap::Bitmap(PixelFormat px_format, Struct::Type component_format,
-               const glm::uvec2& size, size_t channel_count,
+               const Vec2u& size, size_t channel_count,
                const std::vector<std::string>& channel_names, uint8_t* data)
   : pixel_format_(px_format), component_format_(component_format), size_(size),
     data_(data)
@@ -368,7 +368,7 @@ void Bitmap::readJPEG(Stream* stream)
   cinfo.out_color_space = JCS_EXT_RGBA; // Force additional opaque alpha channel
   jpeg_start_decompress(&cinfo);
 
-  size_                = glm::uvec2(cinfo.output_width, cinfo.output_height);
+  size_                = Vec2u(cinfo.output_width, cinfo.output_height);
   component_format_    = Struct::Type::UInt8;
   srgb_gamma_          = true;
   premultiplied_alpha_ = false;

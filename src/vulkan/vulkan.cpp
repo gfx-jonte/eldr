@@ -1,13 +1,22 @@
-#include "eldr/vulkan/common.hpp"
+#include <eldr/core/fwd.hpp>
 #include <eldr/core/logger.hpp>
+#include <eldr/core/math.hpp>
+#include <eldr/vulkan/common.hpp>
+#include <eldr/vulkan/vertex.hpp>
 #include <eldr/vulkan/vulkan.hpp>
 
 #include <string>
-#include <vulkan/vulkan_core.h>
 
 namespace eldr {
 namespace vk {
-const std::vector<VkVertex> vertices = {
+struct UniformBufferObject {
+  ELDR_IMPORT_CORE_TYPES();
+  alignas(16) Mat4f model;
+  alignas(16) Mat4f view;
+  alignas(16) Mat4f proj;
+};
+
+const std::vector<Vertex> vertices = {
   { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
   { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
   { { 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
@@ -15,11 +24,13 @@ const std::vector<VkVertex> vertices = {
 };
 
 const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0 };
+
 // fwd
 // -----------------------------------------------------------------------------
 static VkDebugUtilsMessengerEXT
 setupDebugMessenger(VkInstance& instance, VkAllocationCallbacks* allocator);
 // -----------------------------------------------------------------------------
+
 VulkanWrapper::VulkanWrapper(GLFWwindow* const         window,
                              std::vector<const char*>& instance_extensions)
   : window_(window), current_frame_(0), instance_(instance_extensions),
@@ -140,7 +151,8 @@ VkDebugUtilsMessengerEXT setupDebugMessenger(VkInstance&            instance,
 }
 #endif
 
-void VulkanWrapper::createUniformBuffers() {
+void VulkanWrapper::createUniformBuffers()
+{
   BufferInfo   buffer_info{ .size       = sizeof(UniformBufferObject),
                             .usage      = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                             .properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -285,31 +297,25 @@ void VulkanWrapper::record(uint32_t image_index)
     ThrowVk("Failed to record command buffer!");
 }
 
+ELDR_IMPORT_CORE_TYPES();
 void VulkanWrapper::updateUniformBuffer(uint32_t current_image)
 {
-  static auto start_time = std::chrono::high_resolution_clock::now();
-
-  auto current_time = std::chrono::high_resolution_clock::now();
-
-  float time = std::chrono::duration<float, std::chrono::seconds::period>(
+  static auto start_time   = std::chrono::high_resolution_clock::now();
+  auto        current_time = std::chrono::high_resolution_clock::now();
+  float       time = std::chrono::duration<float, std::chrono::seconds::period>(
                  current_time - start_time)
                  .count();
 
   UniformBufferObject ubo{};
-  ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
-                          glm::vec3(0.0f, 0.0f, 1.0f));
-
-  ubo.view =
-    glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f));
-
-  ubo.proj = glm::perspective(glm::radians(45.0f),
-                              swapchain_.extent().width /
-                                (float) swapchain_.extent().height,
-                              0.1f, 10.0f);
-
+  ubo.model = glm::rotate(Mat4f(1.0f), time * glm::radians(90.0f),
+                          Vec3f(0.0f, 0.0f, 1.0f));
+  ubo.view  = glm::lookAt(Vec3f(2.0f, 2.0f, 2.0f), Vec3f(0.0f, 0.0f, 0.0f),
+                          Vec3f(0.0f, 0.0f, 1.0f));
+  ubo.proj  = glm::perspective(glm::radians(45.0f),
+                               swapchain_.extent().width /
+                                 (float) swapchain_.extent().height,
+                               0.1f, 10.0f);
   ubo.proj[1][1] *= -1;
-
   memcpy(uniform_buffers_mapped_[current_image], &ubo, sizeof(ubo));
 }
 

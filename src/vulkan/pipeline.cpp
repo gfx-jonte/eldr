@@ -1,7 +1,7 @@
 #include <eldr/core/logger.hpp>
 #include <eldr/vulkan/pipeline.hpp>
+#include <eldr/vulkan/vertex.hpp>
 
-#include <glm/glm.hpp>
 
 #include <fstream>
 #include <string>
@@ -53,8 +53,8 @@ Pipeline::Pipeline(const Device* device, const Swapchain& swapchain,
                                                       frag_shader_stage_ci };
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info{};
-  auto binding_description    = VkVertex::getBindingDescription();
-  auto attribute_descriptions = VkVertex::getAttributeDescriptions();
+  auto binding_description    = Vertex::getBindingDescription();
+  auto attribute_descriptions = Vertex::getAttributeDescriptions();
   vertex_input_info.sType =
     VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertex_input_info.vertexBindingDescriptionCount = 1;

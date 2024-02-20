@@ -1,5 +1,7 @@
 #pragma once
 #include <eldr/vulkan/common.hpp>
+#include <eldr/vulkan/swapchain.hpp>
+#include <eldr/vulkan/device.hpp>
 
 namespace eldr {
 namespace vk {

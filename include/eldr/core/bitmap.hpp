@@ -3,9 +3,9 @@
  */
 #pragma once
 
-#include <eldr/core/struct.hpp>
+#include <eldr/core/fwd.hpp>
 #include <eldr/core/stream.hpp>
-#include <eldr/core/math.hpp>
+#include <eldr/core/struct.hpp>
 
 #include <filesystem>
 #include <string>
@@ -14,6 +14,8 @@
 namespace eldr {
 
 class Bitmap {
+  ELDR_IMPORT_CORE_TYPES();
+
 public:
   enum class PixelFormat {
     Y,
@@ -30,7 +32,7 @@ public:
   enum class FileFormat { JPEG, Auto, Unknown };
 
   Bitmap(PixelFormat px_format, Struct::Type component_format,
-         const glm::uvec2& size, size_t channel_count,
+         const Vec2u& size, size_t channel_count,
          const std::vector<std::string>& channel_names = {},
          uint8_t*                        data          = nullptr);
 
@@ -65,17 +67,17 @@ public:
   const uint8_t* uint8Data() const { return data_.get(); }
 
   /// Return the bitmap dimensions in pixels
-  const glm::uvec2& size() const { return size_; }
+  const Vec2u& size() const { return size_; }
 
   /// Return the bitmap's width in pixels
   uint32_t width() const { return size_.x; }
 
   /// Return the bitmap's height in pixels
-  uint32_t height() const { return size_.y; }
-  size_t   channelCount() const { return struct_->fieldCount(); }
-  size_t   pixelCount() const { return (size_t) size_.x * size_.y; }
-  size_t   bytesPerPixel() const;
-  size_t   bufferSize() const;
+  uint32_t          height() const { return size_.y; }
+  size_t            channelCount() const { return struct_->fieldCount(); }
+  size_t            pixelCount() const { return (size_t) size_.x * size_.y; }
+  size_t            bytesPerPixel() const;
+  size_t            bufferSize() const;
   static FileFormat detectFileFormat(Stream* stream);
 
 protected:
@@ -129,7 +131,7 @@ protected:
 private:
   PixelFormat                pixel_format_;
   Struct::Type               component_format_;
-  glm::uvec2                 size_;
+  Vec2u                      size_;
   std::unique_ptr<Struct>    struct_;
   bool                       srgb_gamma_;
   bool                       premultiplied_alpha_;

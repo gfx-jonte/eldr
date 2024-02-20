@@ -17,7 +17,8 @@ src = [
   'surface.cpp',
   'swapchain.cpp',
   'texture.cpp',
-  'vulkan.cpp'
+  'vulkan.cpp',
+  'vertex.cpp'
   ]
 eldr_vulkan = library(
   'eldr-vulkan',
