@@ -1,4 +1,3 @@
-#include <eldr/core/math.hpp>
 #include <eldr/render/mesh.hpp>
 
 namespace eldr {

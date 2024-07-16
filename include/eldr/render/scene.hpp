@@ -2,8 +2,8 @@
 #include <eldr/core/fwd.hpp>
 #include <eldr/render/shape.hpp>
 
-#include <memory>
 #include <vector>
+#include <string>
 
 namespace eldr {
 class Scene {

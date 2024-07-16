@@ -1,6 +1,6 @@
 src = [
   'buffer.cpp',
-  'command.cpp',
+  'commandbuffer.cpp',
   'commandpool.cpp',
   'descriptorpool.cpp',
   'descriptorsetlayout.cpp',
@@ -23,7 +23,7 @@ src = [
 eldr_vulkan = library(
   'eldr-vulkan',
   sources : src,
-  include_directories : [include],
+  include_directories : [include, inc_imgui],
   dependencies : [libglfw, libvulkan, libspdlog],
   link_with : [eldr_core])
   

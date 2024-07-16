@@ -1,4 +1,4 @@
-src = ['scene.cpp', 'mesh.cpp', 'renderer.cpp']
+src = ['scene.cpp', 'mesh.cpp']
 eldr_render = library(
   'eldr-render',
   sources : src,

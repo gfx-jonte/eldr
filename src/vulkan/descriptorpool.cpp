@@ -1,12 +1,15 @@
 #include <eldr/core/logger.hpp>
 #include <eldr/vulkan/descriptorpool.hpp>
 
-#include <array>
+#include <vector>
 
 namespace eldr {
 namespace vk {
 
-DescriptorPool::DescriptorPool(const Device* device) : device_(device)
+DescriptorPool::DescriptorPool(
+  const Device* device, const std::vector<VkDescriptorPoolSize>& pool_sizes,
+  uint32_t max_sets)
+  : device_(device)
 {
   /**
    * From Vulkan tutorial:
@@ -23,17 +26,11 @@ DescriptorPool::DescriptorPool(const Device* device) : device_(device)
    * allocation succeeds on some machines, but fails on others.
    */
 
-  std::array<VkDescriptorPoolSize, 2> pool_sizes{};
-  pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  pool_sizes[0].descriptorCount = static_cast<uint32_t>(max_frames_in_flight);
-  pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  pool_sizes[1].descriptorCount = static_cast<uint32_t>(max_frames_in_flight);
-
   VkDescriptorPoolCreateInfo pool_ci{};
   pool_ci.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   pool_ci.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
   pool_ci.pPoolSizes    = pool_sizes.data();
-  pool_ci.maxSets       = static_cast<uint32_t>(max_frames_in_flight);
+  pool_ci.maxSets       = max_sets;
 
   if (vkCreateDescriptorPool(device_->logical(), &pool_ci, nullptr,
                              &descriptor_pool_) != VK_SUCCESS)

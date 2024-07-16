@@ -1,12 +1,10 @@
 #include <eldr/core/logger.hpp>
-#include <eldr/eldr.hpp>
+#include <eldr/app.hpp>
 
 #include <cxxopts.hpp>
 
 #include <cstdlib>
 #include <iostream>
-#include <spdlog/spdlog.h>
-#include <stdexcept>
 
 int main(int argc, char* argv[])
 {

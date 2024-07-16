@@ -3,6 +3,7 @@
 #include <eldr/vulkan/helpers.hpp>
 
 #include <set>
+
 namespace eldr {
 namespace vk {
 
@@ -15,7 +16,8 @@ static void selectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface,
 static bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface,
                              std::vector<const char*> device_extensions);
 // -----------------------------------------------------------------------------
-//Device::Device() : physical_device_(VK_NULL_HANDLE), device_(VK_NULL_HANDLE){};
+// Device::Device() : physical_device_(VK_NULL_HANDLE),
+// device_(VK_NULL_HANDLE){};
 
 Device::Device(const Instance& instance, const Surface& surface)
 {
@@ -28,11 +30,12 @@ Device::Device(const Instance& instance, const Surface& surface)
   selectPhysicalDevice(instance.get(), surface.get(), physical_device_,
                        device_extensions);
 
-  QueueFamilyIndices indices =
-    findQueueFamilies(physical_device_, surface.get());
+  QueueFamilyIndices queue_family_indices = findQueueFamilies(physical_device_, surface.get());
   std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
-  std::set<uint32_t> unique_queue_families = { indices.graphics_family.value(),
-                                               indices.present_family.value() };
+  std::set<uint32_t>                   unique_queue_families = {
+    queue_family_indices.graphics_family.value(),
+    queue_family_indices.present_family.value()
+  };
 
   float queue_priority = 1.0f;
   for (uint32_t queue_family : unique_queue_families) {
@@ -63,10 +66,10 @@ Device::Device(const Instance& instance, const Surface& surface)
   if (err != VK_SUCCESS)
     ThrowVk("Failed to create device!");
 
-  vkGetDeviceQueue(device_, indices.present_family.value(), 0,
-                   &p_queue_);
-  vkGetDeviceQueue(device_, indices.graphics_family.value(), 0,
-                   &g_queue_);
+  vkGetDeviceQueue(device_, queue_family_indices.present_family.value(),
+                   0, &p_queue_);
+  vkGetDeviceQueue(device_, queue_family_indices.graphics_family.value(),
+                   0, &g_queue_);
 }
 
 Device::~Device()

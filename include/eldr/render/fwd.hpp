@@ -1,7 +1,5 @@
 #pragma once
 
-#include <eldr/core/fwd.hpp>
-
 namespace eldr {
 
 //struct BSDFContext;

@@ -23,6 +23,7 @@ public:
   VkFormat              format() const { return image_format_; }
   const VkSwapchainKHR& get() const { return swapchain_; }
   VkSwapchainKHR&       get() { return swapchain_; }
+  uint32_t              minImageCount() const { return min_image_count_; }
   VkSampleCountFlagBits msaaSamples() const { return msaa_samples_; }
 
   void recreate(Surface& surface, GLFWwindow* const window);

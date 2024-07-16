@@ -2,6 +2,8 @@
 
 #include <eldr/vulkan/common.hpp>
 
+#include <vector>
+
 namespace eldr {
 namespace vk {
 

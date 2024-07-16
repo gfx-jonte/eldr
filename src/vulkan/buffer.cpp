@@ -1,7 +1,6 @@
 #include <eldr/core/logger.hpp>
 #include <eldr/vulkan/buffer.hpp>
 #include <eldr/vulkan/helpers.hpp>
-#include <vulkan/vulkan_core.h>
 
 namespace eldr {
 namespace vk {
@@ -125,13 +124,12 @@ Buffer& Buffer::operator=(Buffer&& other)
 // here through the buffer constructor. Should organize this differently
 void Buffer::copyFrom(Buffer& other, CommandPool& command_pool)
 {
-  SingleTimeCommand command(device_, &command_pool);
-
+  CommandBuffer cb(device_, &command_pool);
+  cb.begin();
   VkBufferCopy copy_region{}; // There are optional offsets in this struct
   copy_region.size = size_;
-  vkCmdCopyBuffer(command.buffer(), other.buffer_, buffer_, 1, &copy_region);
-
-  command.submit();
+  vkCmdCopyBuffer(cb.get(), other.buffer_, buffer_, 1, &copy_region);
+  cb.submit();
 }
 
 } // namespace vk

@@ -9,11 +9,12 @@ namespace vk {
 // TODO: this can perhaps be merged with DescriptorSetLayout somehow
 class DescriptorPool {
 public:
-  DescriptorPool(const Device*);
+  DescriptorPool(const Device*, const std::vector<VkDescriptorPoolSize>&,
+                 uint32_t max_sets);
   ~DescriptorPool();
 
   const VkDescriptorPool& get() const { return descriptor_pool_; }
-  VkDescriptorPool& get() { return descriptor_pool_; }
+  VkDescriptorPool&       get() { return descriptor_pool_; }
 
 private:
   const Device* device_;

@@ -6,7 +6,8 @@
 #include <eldr/vulkan/vertex.hpp>
 #include <eldr/vulkan/vulkan.hpp>
 
-#include <memory>
+#include <backends/imgui_impl_vulkan.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -26,9 +27,8 @@ static VkDebugUtilsMessengerEXT
 setupDebugMessenger(VkInstance& instance, VkAllocationCallbacks* allocator);
 #endif
 // -----------------------------------------------------------------------------
-
-VulkanEngine::VulkanEngine(GLFWwindow* const         window,
-                           std::vector<const char*>& instance_extensions)
+VulkanEngine::VulkanEngine(GLFWwindow* const        window,
+                           std::vector<const char*> instance_extensions)
   : window_(window), current_frame_(0), instance_(instance_extensions),
 #ifdef ELDR_VULKAN_DEBUG_REPORT
     debug_messenger_(setupDebugMessenger(instance_.get(), nullptr)),
@@ -36,16 +36,23 @@ VulkanEngine::VulkanEngine(GLFWwindow* const         window,
     surface_(&instance_, window), device_(instance_, surface_),
     swapchain_(&device_, surface_, window),
     // render_pass_(&device_, swapchain_.format()),
-    descriptor_set_layout_(&device_), descriptor_pool_(&device_),
+    descriptor_set_layout_(&device_),
+    descriptor_pool_(&device_,
+                     { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                         static_cast<uint32_t>(max_frames_in_flight) },
+                       { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                         static_cast<uint32_t>(max_frames_in_flight) } },
+                     static_cast<uint32_t>(max_frames_in_flight)),
     pipeline_(&device_, swapchain_, swapchain_.render_pass_,
               descriptor_set_layout_, swapchain_.msaaSamples()),
     command_pool_(&device_, surface_),
-    texture_sampler_(&device_, command_pool_),
-    vertices_(), indices_(), vertex_buffer_(&device_, vertices_, command_pool_),
+    texture_sampler_(&device_, command_pool_), vertices_(), indices_(),
+    vertex_buffer_(&device_, vertices_, command_pool_),
     index_buffer_(&device_, indices_, command_pool_),
     uniform_buffers_(max_frames_in_flight),
     uniform_buffers_mapped_(max_frames_in_flight),
     command_buffers_(max_frames_in_flight),
+    // command_buffers_(max_frames_in_flight),
     descriptor_sets_(max_frames_in_flight)
 {
 
@@ -165,15 +172,9 @@ void VulkanEngine::createUniformBuffers()
 
 void VulkanEngine::createCommandBuffers()
 {
-  VkCommandBufferAllocateInfo alloc_info{};
-  alloc_info.sType       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  alloc_info.commandPool = command_pool_.get();
-  alloc_info.level       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  alloc_info.commandBufferCount = max_frames_in_flight;
-
-  if (vkAllocateCommandBuffers(device_.logical(), &alloc_info,
-                               command_buffers_.data()) != VK_SUCCESS)
-    ThrowVk("Failed to create command buffers!");
+  for (uint32_t i = 0; i < max_frames_in_flight; ++i) {
+    command_buffers_[i] = CommandBuffer(&device_, &command_pool_);
+  }
 }
 
 void VulkanEngine::createDescriptorSets()
@@ -231,36 +232,83 @@ void VulkanEngine::createDescriptorSets()
                            descriptor_writes.data(), 0, nullptr);
   }
 }
+
+// Needed only for imgui thing
+// TODO: this can be improved...
+static void checkVkResult(VkResult result) { CheckVkResult(result); }
+
+void VulkanEngine::initImGui()
+{
+
+  // VkDescriptorPoolSize pool_sizes[] = {
+  //   { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+  // };
+  // VkDescriptorPoolCreateInfo pool_info = {};
+  // pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  // pool_info.flags         =
+  // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT; pool_info.maxSets = 1;
+  // pool_info.poolSizeCount = (uint32_t) IM_ARRAYSIZE(pool_sizes);
+  // pool_info.pPoolSizes    = pool_sizes;
+  // VkResult err = vkCreateDescriptorPool(device_.logical(), &pool_info,
+  // nullptr,
+  //                                       &imgui_descriptor_pool_);
+  // CheckVkResult(err);
+
+  // TODO: make general DescriptorPool class
+
+  const std::vector<VkDescriptorPoolSize> pool_sizes = {
+    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
+  };
+
+  DescriptorPool imgui_descriptor_pool(
+    &device_, pool_sizes, static_cast<uint32_t>(max_frames_in_flight));
+
+  QueueFamilyIndices queue_family_indices =
+    findQueueFamilies(device_.physical(), surface_.get());
+  ImGui_ImplVulkan_InitInfo init_info = {};
+  init_info.Instance                  = instance_.get();
+  init_info.PhysicalDevice            = device_.physical();
+  init_info.Device                    = device_.logical();
+  init_info.QueueFamily     = queue_family_indices.graphics_family.value();
+  init_info.Queue           = device_.graphicsQueue();
+  init_info.PipelineCache   = VK_NULL_HANDLE;
+  init_info.DescriptorPool  = imgui_descriptor_pool.get();
+  init_info.Subpass         = 0;
+  init_info.MinImageCount   = swapchain_.minImageCount();
+  init_info.ImageCount      = swapchain_.minImageCount();
+  init_info.MSAASamples     = swapchain_.msaaSamples();
+  init_info.Allocator       = nullptr;
+  init_info.CheckVkResultFn = vk::checkVkResult;
+  ImGui_ImplVulkan_Init(&init_info, swapchain_.render_pass_.get());
+
+  // Upload fonts
+  {
+    CommandBuffer cb(&device_, &command_pool_);
+    cb.beginSingleCommand();
+    ImGui_ImplVulkan_CreateFontsTexture(cb.get());
+    //cb.end();
+    cb.submit();
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+  }
+}
+
 void VulkanEngine::record(uint32_t image_index)
 {
-  VkCommandBufferBeginInfo command_buffer_info{};
-  command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  command_buffer_info.flags = 0;
-  command_buffer_info.pInheritanceInfo = nullptr;
+  command_buffers_[current_frame_].begin();
 
-  if (vkBeginCommandBuffer(command_buffers_[current_frame_],
-                           &command_buffer_info) != VK_SUCCESS)
-    ThrowVk("Failed to begin command buffer!");
+  VkCommandBuffer current_cb = command_buffers_[current_frame_].get();
 
   // Note that the order matters, depth is on index 1
   std::array<VkClearValue, 2> clear_values{};
   clear_values[0].color        = { { 0.0f, 0.0f, 0.0f, 1.0f } };
   clear_values[1].depthStencil = { 1.0f, 0 };
 
-  VkRenderPassBeginInfo render_pass_info{};
-  render_pass_info.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_info.renderPass        = swapchain_.render_pass_.get();
-  render_pass_info.framebuffer       = swapchain_.framebuffers_[image_index];
-  render_pass_info.renderArea.offset = { 0, 0 };
-  render_pass_info.renderArea.extent = swapchain_.extent();
-  render_pass_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-  render_pass_info.pClearValues    = clear_values.data();
+  command_buffers_[current_frame_].beginRenderPass(
+    swapchain_.render_pass_.get(), swapchain_.framebuffers_[image_index],
+    swapchain_.extent(), clear_values.size(), clear_values.data());
 
-  vkCmdBeginRenderPass(command_buffers_[current_frame_], &render_pass_info,
-                       VK_SUBPASS_CONTENTS_INLINE);
-
-  vkCmdBindPipeline(command_buffers_[current_frame_],
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get());
+  vkCmdBindPipeline(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pipeline_.get());
   VkViewport viewport{};
   viewport.x        = 0.0f;
   viewport.y        = 0.0f;
@@ -268,34 +316,34 @@ void VulkanEngine::record(uint32_t image_index)
   viewport.height   = static_cast<float>(swapchain_.extent().height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(command_buffers_[current_frame_], 0, 1, &viewport);
+  vkCmdSetViewport(current_cb, 0, 1, &viewport);
 
   VkRect2D scissor{};
   scissor.offset = { 0, 0 };
   scissor.extent = swapchain_.extent();
-  vkCmdSetScissor(command_buffers_[current_frame_], 0, 1, &scissor);
+  vkCmdSetScissor(current_cb, 0, 1, &scissor);
 
-  vkCmdBindPipeline(command_buffers_[current_frame_],
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get());
+  vkCmdBindPipeline(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pipeline_.get());
 
   VkBuffer     vertex_buffers[] = { vertex_buffer_.get() };
   VkDeviceSize offsets[]        = { 0 };
 
-  vkCmdBindVertexBuffers(command_buffers_[current_frame_], 0, 1, vertex_buffers,
-                         offsets);
-  vkCmdBindIndexBuffer(command_buffers_[current_frame_], index_buffer_.get(), 0,
+  vkCmdBindVertexBuffers(current_cb, 0, 1, vertex_buffers, offsets);
+  vkCmdBindIndexBuffer(current_cb, index_buffer_.get(), 0,
                        VK_INDEX_TYPE_UINT32);
 
-  vkCmdBindDescriptorSets(command_buffers_[current_frame_],
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.layout(),
-                          0, 1, &descriptor_sets_[current_frame_], 0, nullptr);
+  vkCmdBindDescriptorSets(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          pipeline_.layout(), 0, 1,
+                          &descriptor_sets_[current_frame_], 0, nullptr);
 
-  vkCmdDrawIndexed(command_buffers_[current_frame_],
-                   static_cast<uint32_t>(indices_.size()), 1, 0, 0, 0);
+  vkCmdDrawIndexed(current_cb, static_cast<uint32_t>(indices_.size()), 1, 0, 0,
+                   0);
 
-  vkCmdEndRenderPass(command_buffers_[current_frame_]);
-  if (vkEndCommandBuffer(command_buffers_[current_frame_]) != VK_SUCCESS)
-    ThrowVk("Failed to record command buffer!");
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), current_cb);
+
+  command_buffers_[current_frame_].endRenderPass();
+  command_buffers_[current_frame_].end();
 }
 
 void VulkanEngine::updateUniformBuffer(uint32_t current_image)
@@ -358,7 +406,8 @@ void VulkanEngine::drawFrame()
   }
 
   vkResetFences(device_.logical(), 1, &in_flight_fences_[current_frame_].get());
-  vkResetCommandBuffer(command_buffers_[current_frame_], 0);
+
+  command_buffers_[current_frame_].reset();
 
   record(image_index);
 
@@ -377,7 +426,7 @@ void VulkanEngine::drawFrame()
   submit_info.pWaitSemaphores     = wait_semaphores;
   submit_info.pWaitDstStageMask   = wait_stages;
   submit_info.commandBufferCount  = 1;
-  submit_info.pCommandBuffers     = &command_buffers_[current_frame_];
+  submit_info.pCommandBuffers     = &command_buffers_[current_frame_].get();
   VkSemaphore signal_semaphores[] = {
     render_finished_sem_[current_frame_].get()
   };

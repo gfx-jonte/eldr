@@ -1,10 +1,8 @@
 #pragma once
-#include <eldr/vulkan/command.hpp>
+#include <eldr/vulkan/commandbuffer.hpp>
 #include <eldr/vulkan/common.hpp>
 #include <eldr/vulkan/device.hpp>
 #include <eldr/vulkan/vertex.hpp>
-
-#include <array>
 
 namespace eldr {
 namespace vk {

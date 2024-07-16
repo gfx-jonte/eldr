@@ -85,7 +85,8 @@ void generateMipmaps(const Device* device, CommandPool& command_pool,
           "blitting!");
   }
 
-  SingleTimeCommand command(device, &command_pool);
+  CommandBuffer cb(device, &command_pool);
+  cb.beginSingleCommand();
 
   VkImageMemoryBarrier barrier{};
   barrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -106,7 +107,7 @@ void generateMipmaps(const Device* device, CommandPool& command_pool,
     barrier.newLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    vkCmdPipelineBarrier(command.buffer(), VK_PIPELINE_STAGE_TRANSFER_BIT,
+    vkCmdPipelineBarrier(cb.get(), VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0,
                          nullptr, 1, &barrier);
 
@@ -124,7 +125,7 @@ void generateMipmaps(const Device* device, CommandPool& command_pool,
     blit.dstSubresource.mipLevel       = i;
     blit.dstSubresource.baseArrayLayer = 0;
     blit.dstSubresource.layerCount     = 1;
-    vkCmdBlitImage(command.buffer(), image.get(),
+    vkCmdBlitImage(cb.get(), image.get(),
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image.get(),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
                    VK_FILTER_LINEAR);
@@ -134,7 +135,7 @@ void generateMipmaps(const Device* device, CommandPool& command_pool,
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier(command.buffer(), VK_PIPELINE_STAGE_TRANSFER_BIT,
+    vkCmdPipelineBarrier(cb.get(), VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr,
                          0, nullptr, 1, &barrier);
 
@@ -150,10 +151,10 @@ void generateMipmaps(const Device* device, CommandPool& command_pool,
   barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
   barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-  vkCmdPipelineBarrier(command.buffer(), VK_PIPELINE_STAGE_TRANSFER_BIT,
+  vkCmdPipelineBarrier(cb.get(), VK_PIPELINE_STAGE_TRANSFER_BIT,
                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0,
                        nullptr, 1, &barrier);
-  command.submit();
+  cb.submit();
 }
 
 // Texture& Texture::operator=(Texture&& other) {

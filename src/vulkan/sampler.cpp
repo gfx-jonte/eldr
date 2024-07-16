@@ -7,7 +7,6 @@ namespace vk {
 Sampler::Sampler(const Device* device, uint32_t mip_levels) : device_(device)
 {
   VkSamplerCreateInfo sampler_info{};
-  // TODO: these should be options
   sampler_info.sType        = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   sampler_info.magFilter    = VK_FILTER_LINEAR;
   sampler_info.minFilter    = VK_FILTER_LINEAR;
@@ -15,8 +14,7 @@ Sampler::Sampler(const Device* device, uint32_t mip_levels) : device_(device)
   sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-  VkPhysicalDeviceProperties props{}; // TODO: these should live in the
-                                      // PhysicalDevice class
+  VkPhysicalDeviceProperties props{};
   vkGetPhysicalDeviceProperties(device_->physical(), &props);
   sampler_info.anisotropyEnable        = VK_TRUE;
   sampler_info.maxAnisotropy           = props.limits.maxSamplerAnisotropy;

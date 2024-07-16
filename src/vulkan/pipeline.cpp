@@ -66,7 +66,6 @@ Pipeline::Pipeline(const Device* device, const Swapchain& swapchain,
   VkPipelineInputAssemblyStateCreateInfo input_assembly{};
   input_assembly.sType =
     VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  // TODO: Use different topology?
   input_assembly.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   input_assembly.primitiveRestartEnable = VK_FALSE;
 
@@ -134,27 +133,26 @@ Pipeline::Pipeline(const Device* device, const Swapchain& swapchain,
   depth_stencil.back              = {};
 
   // TODO: may want to change
-  VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-  colorBlendAttachment.colorWriteMask =
+  VkPipelineColorBlendAttachmentState color_blend_attachment{};
+  color_blend_attachment.colorWriteMask =
     VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
     VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colorBlendAttachment.blendEnable         = VK_TRUE;
-  colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-  colorBlendAttachment.dstColorBlendFactor =
+  color_blend_attachment.blendEnable         = VK_TRUE;
+  color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment.dstColorBlendFactor =
     VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  colorBlendAttachment.colorBlendOp        = VK_BLEND_OP_ADD;
-  colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-  colorBlendAttachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+  color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+  color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-  // TODO: specify
   VkPipelineColorBlendStateCreateInfo color_blending{};
   color_blending.sType =
     VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   color_blending.logicOpEnable     = VK_FALSE;
   color_blending.logicOp           = VK_LOGIC_OP_COPY; // Optional
   color_blending.attachmentCount   = 1;
-  color_blending.pAttachments      = &colorBlendAttachment;
+  color_blending.pAttachments      = &color_blend_attachment;
   color_blending.blendConstants[0] = 0.0f; // Optional
   color_blending.blendConstants[1] = 0.0f; // Optional
   color_blending.blendConstants[2] = 0.0f; // Optional
@@ -208,12 +206,11 @@ Pipeline::~Pipeline()
     vkDestroyPipelineLayout(device_->logical(), layout_, nullptr);
 }
 
-// TODO: Maybe this should not be placed here
 static std::vector<char> loadShader(const std::string& type)
 {
   const char* env_p = std::getenv("ELDR_DIR");
   if (env_p == nullptr) {
-    throw std::runtime_error("Environment not set up correctly");
+    Throw("loadShader(): Environment not set up correctly");
   }
 
   std::string filename{};
@@ -225,7 +222,7 @@ static std::vector<char> loadShader(const std::string& type)
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if (!file.is_open()) {
-    throw std::runtime_error("[UTIL]: Failed to open file!");
+    Throw("loadShader(): Failed to open file!");
   }
 
   size_t            file_size = (size_t) file.tellg();

@@ -8,7 +8,7 @@ template <size_t size, typename T> using Color = glm::vec<size, T>;
 template <size_t size, typename T> using Point = glm::vec<size, T>;
 
 // TODO: experiment with glm SIMD types and compare performance
-template <typename T> struct CoreAliases {
+struct CoreAliases {
   using Vec2i = glm::vec<2, glm::int32_t>;
   using Vec3i = glm::vec<3, glm::int32_t>;
   using Vec4i = glm::vec<4, glm::int32_t>;
@@ -58,8 +58,8 @@ template <typename T> struct CoreAliases {
   using Color3d = Color<3, glm::float64_t>;
 };
 
-#define ELDR_IMPORT_CORE_TYPES_PREFIX(Float_, prefix)                          \
-  using prefix##CoreAliases = eldr::CoreAliases<Float_>;                       \
+#define ELDR_IMPORT_CORE_TYPES_PREFIX(prefix)                          \
+  using prefix##CoreAliases = eldr::CoreAliases;                               \
   using prefix##Vec2i       = typename prefix##CoreAliases::Vec2i;             \
   using prefix##Vec3i       = typename prefix##CoreAliases::Vec3i;             \
   using prefix##Vec4i       = typename prefix##CoreAliases::Vec4i;             \
@@ -97,6 +97,6 @@ template <typename T> struct CoreAliases {
   using prefix##Color1d     = typename prefix##CoreAliases::Color1d;           \
   using prefix##Color3d     = typename prefix##CoreAliases::Color3d;
 
-#define ELDR_IMPORT_CORE_TYPES() ELDR_IMPORT_CORE_TYPES_PREFIX(float, )
+#define ELDR_IMPORT_CORE_TYPES() ELDR_IMPORT_CORE_TYPES_PREFIX()
 
-} //
+} // namespace eldr

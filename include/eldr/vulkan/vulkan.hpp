@@ -1,6 +1,7 @@
 #pragma once
 
 #include <eldr/vulkan/buffer.hpp>
+#include <eldr/vulkan/commandbuffer.hpp>
 #include <eldr/vulkan/commandpool.hpp>
 #include <eldr/vulkan/descriptorpool.hpp>
 #include <eldr/vulkan/descriptorsetlayout.hpp>
@@ -22,9 +23,10 @@ class VulkanEngine {
 
 public:
   VulkanEngine();
-  VulkanEngine(GLFWwindow* const,
-               std::vector<const char*>& instance_extensions);
+  VulkanEngine(GLFWwindow* const, std::vector<const char*> instance_extensions);
   ~VulkanEngine();
+
+  void initImGui();
 
   void drawFrame();
   void submitGeometry(const std::vector<Vec3f>& positions,
@@ -49,7 +51,7 @@ private:
   Surface                      surface_;
   Device                       device_;
   Swapchain                    swapchain_;
-  DescriptorSetLayout          descriptor_set_layout_;
+  DescriptorSetLayout          descriptor_set_layout_; // TODO: remove?
   DescriptorPool               descriptor_pool_;
   Pipeline                     pipeline_;
   CommandPool                  command_pool_;
@@ -60,11 +62,12 @@ private:
   Buffer                       index_buffer_;
   std::vector<Buffer>          uniform_buffers_;
   std::vector<void*>           uniform_buffers_mapped_;
-  std::vector<VkCommandBuffer> command_buffers_;
+  std::vector<CommandBuffer>  command_buffers_;
   std::vector<VkDescriptorSet> descriptor_sets_;
   std::vector<Semaphore>       image_available_sem_;
   std::vector<Semaphore>       render_finished_sem_;
   std::vector<Fence>           in_flight_fences_;
 };
+
 } // namespace vk
 } // namespace eldr

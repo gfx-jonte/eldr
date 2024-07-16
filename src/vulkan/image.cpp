@@ -1,4 +1,4 @@
-#include <eldr/vulkan/command.hpp>
+#include <eldr/vulkan/commandbuffer.hpp>
 #include <eldr/vulkan/helpers.hpp>
 #include <eldr/vulkan/image.hpp>
 
@@ -82,12 +82,12 @@ Image& Image::operator=(Image&& other)
   return *this;
 }
 
-// TODO: figure out command buffers
 void Image::transitionLayout(CommandPool&  command_pool,
                              VkImageLayout old_layout, VkImageLayout new_layout,
                              uint32_t mip_levels)
 {
-  SingleTimeCommand command(device_, &command_pool);
+  CommandBuffer cb(device_, &command_pool);
+  cb.beginSingleCommand();
 
   VkImageMemoryBarrier barrier{};
   barrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -123,15 +123,16 @@ void Image::transitionLayout(CommandPool&  command_pool,
     ThrowSpecific(std::invalid_argument, "Unsupported layout transition!");
   }
 
-  vkCmdPipelineBarrier(command.buffer(), source_stage, destination_stage, 0, 0,
+  vkCmdPipelineBarrier(cb.get(), source_stage, destination_stage, 0, 0,
                        nullptr, 0, nullptr, 1, &barrier);
 
-  command.submit();
+  cb.submit();
 }
 
 void Image::copyFromBuffer(const Buffer& buffer, CommandPool& command_pool)
 {
-  SingleTimeCommand command(device_, &command_pool);
+  CommandBuffer cb(device_, &command_pool);
+  cb.beginSingleCommand();
 
   VkBufferImageCopy region{};
   region.bufferOffset      = 0;
@@ -146,10 +147,10 @@ void Image::copyFromBuffer(const Buffer& buffer, CommandPool& command_pool)
   region.imageOffset = { 0, 0, 0 };
   region.imageExtent = { size_.x, size_.y, 1 };
 
-  vkCmdCopyBufferToImage(command.buffer(), buffer.get(), image_,
+  vkCmdCopyBufferToImage(cb.get(), buffer.get(), image_,
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-  command.submit();
+  cb.submit();
 }
 } // namespace vk
 } // namespace eldr

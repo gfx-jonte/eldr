@@ -1,6 +1,5 @@
 #pragma once
 #include <eldr/core/fwd.hpp>
-#include <eldr/core/math.hpp>
 #include <eldr/vulkan/common.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL

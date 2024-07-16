@@ -2,7 +2,6 @@
 
 #include <eldr/core/fwd.hpp>
 
-#include <string>
 namespace eldr {
 
 enum class ShapeType { Mesh, Disk, Rectangle, Sphere, Other };
@@ -25,7 +24,7 @@ protected:
   //  Sensor sensor_;
   //  Medium interior_medium_;
   //  Medium exterior_medium_;
-  std::string id_;
+  //std::string id_;
   ShapeType   shape_type_ = ShapeType::Other;
 };
 } // namespace eldr

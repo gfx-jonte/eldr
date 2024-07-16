@@ -10,11 +10,11 @@
 #include <cmath>
 
 namespace eldr {
-// TODO: move?
 constexpr bool hasFlag(uint32_t flags, Struct::Flags f)
 {
   return (flags & static_cast<uint32_t>(f)) != 0;
 }
+
 Struct::Struct(bool pack, Struct::ByteOrder byte_order)
   : pack_(pack), byte_order_(byte_order)
 {
@@ -161,8 +161,6 @@ std::string Struct::toString() const
     }
     os << "  " << f.type;
     os << " " << f.name << "; // @" << f.offset;
-    // TODO: has_flag is implemented as a constexpr function
-    // simply static_cast<uint32_t>(Flags::f) & f.flags != 0
     if (hasFlag(f.flags, Flags::Normalized))
       os << ", normalized";
     if (hasFlag(f.flags, Flags::Gamma))
