@@ -37,12 +37,14 @@ VulkanEngine::VulkanEngine(GLFWwindow* const        window,
     swapchain_(&device_, surface_, window),
     // render_pass_(&device_, swapchain_.format()),
     descriptor_set_layout_(&device_),
-    descriptor_pool_(&device_,
-                     { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                         static_cast<uint32_t>(max_frames_in_flight) },
-                       { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                         static_cast<uint32_t>(max_frames_in_flight) } },
-                     static_cast<uint32_t>(max_frames_in_flight)),
+    descriptor_pool_(
+      &device_,
+      { { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          static_cast<uint32_t>(max_frames_in_flight) },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+          static_cast<uint32_t>(max_frames_in_flight) },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 } }, // ImGui
+      0, static_cast<uint32_t>(max_frames_in_flight) + 1), // TODO: figure out
     pipeline_(&device_, swapchain_, swapchain_.render_pass_,
               descriptor_set_layout_, swapchain_.msaaSamples()),
     command_pool_(&device_, surface_),
@@ -239,30 +241,6 @@ static void checkVkResult(VkResult result) { CheckVkResult(result); }
 
 void VulkanEngine::initImGui()
 {
-
-  // VkDescriptorPoolSize pool_sizes[] = {
-  //   { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-  // };
-  // VkDescriptorPoolCreateInfo pool_info = {};
-  // pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  // pool_info.flags         =
-  // VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT; pool_info.maxSets = 1;
-  // pool_info.poolSizeCount = (uint32_t) IM_ARRAYSIZE(pool_sizes);
-  // pool_info.pPoolSizes    = pool_sizes;
-  // VkResult err = vkCreateDescriptorPool(device_.logical(), &pool_info,
-  // nullptr,
-  //                                       &imgui_descriptor_pool_);
-  // CheckVkResult(err);
-
-  // TODO: make general DescriptorPool class
-
-  const std::vector<VkDescriptorPoolSize> pool_sizes = {
-    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
-  };
-
-  DescriptorPool imgui_descriptor_pool(
-    &device_, pool_sizes, static_cast<uint32_t>(max_frames_in_flight));
-
   QueueFamilyIndices queue_family_indices =
     findQueueFamilies(device_.physical(), surface_.get());
   ImGui_ImplVulkan_InitInfo init_info = {};
@@ -272,7 +250,7 @@ void VulkanEngine::initImGui()
   init_info.QueueFamily     = queue_family_indices.graphics_family.value();
   init_info.Queue           = device_.graphicsQueue();
   init_info.PipelineCache   = VK_NULL_HANDLE;
-  init_info.DescriptorPool  = imgui_descriptor_pool.get();
+  init_info.DescriptorPool  = descriptor_pool_.get();
   init_info.Subpass         = 0;
   init_info.MinImageCount   = swapchain_.minImageCount();
   init_info.ImageCount      = swapchain_.minImageCount();
@@ -286,7 +264,6 @@ void VulkanEngine::initImGui()
     CommandBuffer cb(&device_, &command_pool_);
     cb.beginSingleCommand();
     ImGui_ImplVulkan_CreateFontsTexture(cb.get());
-    //cb.end();
     cb.submit();
     ImGui_ImplVulkan_DestroyFontUploadObjects();
   }

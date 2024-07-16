@@ -62,7 +62,7 @@ private:
   Buffer                       index_buffer_;
   std::vector<Buffer>          uniform_buffers_;
   std::vector<void*>           uniform_buffers_mapped_;
-  std::vector<CommandBuffer>  command_buffers_;
+  std::vector<CommandBuffer>   command_buffers_;
   std::vector<VkDescriptorSet> descriptor_sets_;
   std::vector<Semaphore>       image_available_sem_;
   std::vector<Semaphore>       render_finished_sem_;

@@ -8,7 +8,7 @@ namespace vk {
 
 DescriptorPool::DescriptorPool(
   const Device* device, const std::vector<VkDescriptorPoolSize>& pool_sizes,
-  uint32_t max_sets)
+  VkDescriptorPoolCreateFlags flags, uint32_t max_sets)
   : device_(device)
 {
   /**
@@ -28,6 +28,7 @@ DescriptorPool::DescriptorPool(
 
   VkDescriptorPoolCreateInfo pool_ci{};
   pool_ci.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  pool_ci.flags         = flags;
   pool_ci.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
   pool_ci.pPoolSizes    = pool_sizes.data();
   pool_ci.maxSets       = max_sets;

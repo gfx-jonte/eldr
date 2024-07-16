@@ -10,7 +10,7 @@ namespace vk {
 class DescriptorPool {
 public:
   DescriptorPool(const Device*, const std::vector<VkDescriptorPoolSize>&,
-                 uint32_t max_sets);
+                 VkDescriptorPoolCreateFlags flags, uint32_t max_sets);
   ~DescriptorPool();
 
   const VkDescriptorPool& get() const { return descriptor_pool_; }
