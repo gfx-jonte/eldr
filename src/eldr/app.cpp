@@ -4,15 +4,12 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 
 namespace eldr {
 
 // -----------------------------------------------------------------------------
 // fwd
 // -----------------------------------------------------------------------------
-static void                     setupImGui(GLFWwindow*, vk::VulkanEngine*);
 static GLFWwindow*              initGLFWwindow(uint32_t width, uint32_t height);
 static std::vector<const char*> getGLFWextensions();
 // -----------------------------------------------------------------------------
@@ -36,14 +33,14 @@ EldrApp::EldrApp()
     vk_engine_(new vk::VulkanEngine(window_, getGLFWextensions())),
     scene_({ model_path_str, texture_path_str })
 {
-
   glfwSetWindowUserPointer(window_, this);
   glfwSetFramebufferSizeCallback(window_, framebufferResizeCallback);
-  setupImGui(window_, vk_engine_);
+  vk_engine_->initImGui();
 }
 
 EldrApp::~EldrApp()
 {
+  vk_engine_->shutdownImGui();
   glfwDestroyWindow(window_);
   glfwTerminate();
   delete vk_engine_;
@@ -81,20 +78,6 @@ static std::vector<const char*> getGLFWextensions()
   return extensions;
 }
 
-static void setupImGui(GLFWwindow* window, vk::VulkanEngine* vk_engine)
-{
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
-  (void) io;
-  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  io.Fonts->AddFontDefault();
-  ImGui::StyleColorsDark();
-  // TODO: set up fonts and more style stuff
-  ImGui_ImplGlfw_InitForVulkan(window, true);
-  vk_engine->initImGui();
-}
-
 void EldrApp::resize() const { vk_engine_->framebuffer_resized_ = true; }
 
 void EldrApp::run()
@@ -103,9 +86,7 @@ void EldrApp::run()
   submitGeometry(scene_.getShapes());
   while (!glfwWindowShouldClose(window_)) {
     glfwPollEvents();
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    vk_engine_->newFrame();
     ImGui::ShowDemoWindow(&show_demo_window);
     //ImGuiIO& io = ImGui::GetIO();
     ImGui::Render();
@@ -115,9 +96,6 @@ void EldrApp::run()
     //  ImGui::RenderPlatformWindowsDefault();
     //}
   }
-  ImGui_ImplVulkan_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
 }
 
 void EldrApp::submitGeometry(const std::vector<Shape*>& shapes)

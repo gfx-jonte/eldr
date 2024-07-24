@@ -58,45 +58,43 @@ struct CoreAliases {
   using Color3d = Color<3, glm::float64_t>;
 };
 
-#define ELDR_IMPORT_CORE_TYPES_PREFIX(prefix)                          \
-  using prefix##CoreAliases = eldr::CoreAliases;                               \
-  using prefix##Vec2i       = typename prefix##CoreAliases::Vec2i;             \
-  using prefix##Vec3i       = typename prefix##CoreAliases::Vec3i;             \
-  using prefix##Vec4i       = typename prefix##CoreAliases::Vec4i;             \
-  using prefix##Vec2u       = typename prefix##CoreAliases::Vec2u;             \
-  using prefix##Vec3u       = typename prefix##CoreAliases::Vec3u;             \
-  using prefix##Vec4u       = typename prefix##CoreAliases::Vec4u;             \
-  using prefix##Vec2f       = typename prefix##CoreAliases::Vec2f;             \
-  using prefix##Vec3f       = typename prefix##CoreAliases::Vec3f;             \
-  using prefix##Vec4f       = typename prefix##CoreAliases::Vec4f;             \
-  using prefix##Vec2d       = typename prefix##CoreAliases::Vec2d;             \
-  using prefix##Vec3d       = typename prefix##CoreAliases::Vec3d;             \
-  using prefix##Vec4d       = typename prefix##CoreAliases::Vec4d;             \
-  using prefix##Point2i     = typename prefix##CoreAliases::Point2i;           \
-  using prefix##Point3i     = typename prefix##CoreAliases::Point3i;           \
-  using prefix##Point4i     = typename prefix##CoreAliases::Point4i;           \
-  using prefix##Point2u     = typename prefix##CoreAliases::Point2u;           \
-  using prefix##Point3u     = typename prefix##CoreAliases::Point3u;           \
-  using prefix##Point4u     = typename prefix##CoreAliases::Point4u;           \
-  using prefix##Point2f     = typename prefix##CoreAliases::Point2f;           \
-  using prefix##Point3f     = typename prefix##CoreAliases::Point3f;           \
-  using prefix##Point4f     = typename prefix##CoreAliases::Point4f;           \
-  using prefix##Point2d     = typename prefix##CoreAliases::Point2d;           \
-  using prefix##Point3d     = typename prefix##CoreAliases::Point3d;           \
-  using prefix##Point4d     = typename prefix##CoreAliases::Point4d;           \
-  using prefix##Mat2f       = typename prefix##CoreAliases::Mat2f;             \
-  using prefix##Mat2d       = typename prefix##CoreAliases::Mat2d;             \
-  using prefix##Mat3f       = typename prefix##CoreAliases::Mat3f;             \
-  using prefix##Mat3d       = typename prefix##CoreAliases::Mat3d;             \
-  using prefix##Mat4f       = typename prefix##CoreAliases::Mat4f;             \
-  using prefix##Mat4d       = typename prefix##CoreAliases::Mat4d;             \
-  using prefix##Quat4f      = typename prefix##CoreAliases::Quat4f;            \
-  using prefix##Quat4d      = typename prefix##CoreAliases::Quat4d;            \
-  using prefix##Color1f     = typename prefix##CoreAliases::Color1f;           \
-  using prefix##Color3f     = typename prefix##CoreAliases::Color3f;           \
-  using prefix##Color1d     = typename prefix##CoreAliases::Color1d;           \
-  using prefix##Color3d     = typename prefix##CoreAliases::Color3d;
-
-#define ELDR_IMPORT_CORE_TYPES() ELDR_IMPORT_CORE_TYPES_PREFIX()
+#define ELDR_IMPORT_CORE_TYPES()                                               \
+  using CoreAliases = eldr::CoreAliases;                                       \
+  using Vec2i       = typename CoreAliases::Vec2i;                             \
+  using Vec3i       = typename CoreAliases::Vec3i;                             \
+  using Vec4i       = typename CoreAliases::Vec4i;                             \
+  using Vec2u       = typename CoreAliases::Vec2u;                             \
+  using Vec3u       = typename CoreAliases::Vec3u;                             \
+  using Vec4u       = typename CoreAliases::Vec4u;                             \
+  using Vec2f       = typename CoreAliases::Vec2f;                             \
+  using Vec3f       = typename CoreAliases::Vec3f;                             \
+  using Vec4f       = typename CoreAliases::Vec4f;                             \
+  using Vec2d       = typename CoreAliases::Vec2d;                             \
+  using Vec3d       = typename CoreAliases::Vec3d;                             \
+  using Vec4d       = typename CoreAliases::Vec4d;                             \
+  using Point2i     = typename CoreAliases::Point2i;                           \
+  using Point3i     = typename CoreAliases::Point3i;                           \
+  using Point4i     = typename CoreAliases::Point4i;                           \
+  using Point2u     = typename CoreAliases::Point2u;                           \
+  using Point3u     = typename CoreAliases::Point3u;                           \
+  using Point4u     = typename CoreAliases::Point4u;                           \
+  using Point2f     = typename CoreAliases::Point2f;                           \
+  using Point3f     = typename CoreAliases::Point3f;                           \
+  using Point4f     = typename CoreAliases::Point4f;                           \
+  using Point2d     = typename CoreAliases::Point2d;                           \
+  using Point3d     = typename CoreAliases::Point3d;                           \
+  using Point4d     = typename CoreAliases::Point4d;                           \
+  using Mat2f       = typename CoreAliases::Mat2f;                             \
+  using Mat2d       = typename CoreAliases::Mat2d;                             \
+  using Mat3f       = typename CoreAliases::Mat3f;                             \
+  using Mat3d       = typename CoreAliases::Mat3d;                             \
+  using Mat4f       = typename CoreAliases::Mat4f;                             \
+  using Mat4d       = typename CoreAliases::Mat4d;                             \
+  using Quat4f      = typename CoreAliases::Quat4f;                            \
+  using Quat4d      = typename CoreAliases::Quat4d;                            \
+  using Color1f     = typename CoreAliases::Color1f;                           \
+  using Color3f     = typename CoreAliases::Color3f;                           \
+  using Color1d     = typename CoreAliases::Color1d;                           \
+  using Color3d     = typename CoreAliases::Color3d;
 
 } // namespace eldr

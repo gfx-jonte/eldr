@@ -6,7 +6,9 @@
 #include <eldr/vulkan/vertex.hpp>
 #include <eldr/vulkan/vulkan.hpp>
 
+#include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include <imgui.h>
 
 #include <string>
 #include <unordered_map>
@@ -44,7 +46,7 @@ VulkanEngine::VulkanEngine(GLFWwindow* const        window,
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
           static_cast<uint32_t>(max_frames_in_flight) },
         { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 } }, // ImGui
-      0, static_cast<uint32_t>(max_frames_in_flight) + 1), // TODO: figure out
+      0, static_cast<uint32_t>(max_frames_in_flight) + 1),  // TODO: figure out
     pipeline_(&device_, swapchain_, swapchain_.render_pass_,
               descriptor_set_layout_, swapchain_.msaaSamples()),
     command_pool_(&device_, surface_),
@@ -241,6 +243,18 @@ static void checkVkResult(VkResult result) { CheckVkResult(result); }
 
 void VulkanEngine::initImGui()
 {
+  // setup
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO();
+  (void) io;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.Fonts->AddFontDefault();
+  ImGui::StyleColorsDark();
+  // TODO: set up fonts and more style stuff
+  ImGui_ImplGlfw_InitForVulkan(window_, true);
+
+  // init
   QueueFamilyIndices queue_family_indices =
     findQueueFamilies(device_.physical(), surface_.get());
   ImGui_ImplVulkan_InitInfo init_info = {};
@@ -269,11 +283,19 @@ void VulkanEngine::initImGui()
   }
 }
 
+void VulkanEngine::shutdownImGui()
+{
+  vkDeviceWaitIdle(device_.logical());
+  ImGui_ImplVulkan_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
 void VulkanEngine::record(uint32_t image_index)
 {
-  command_buffers_[current_frame_].begin();
+  CommandBuffer& cb = command_buffers_[current_frame_];
 
-  VkCommandBuffer current_cb = command_buffers_[current_frame_].get();
+  cb.begin();
 
   // Note that the order matters, depth is on index 1
   std::array<VkClearValue, 2> clear_values{};
@@ -284,8 +306,8 @@ void VulkanEngine::record(uint32_t image_index)
     swapchain_.render_pass_.get(), swapchain_.framebuffers_[image_index],
     swapchain_.extent(), clear_values.size(), clear_values.data());
 
-  vkCmdBindPipeline(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline_.get());
+  vkCmdBindPipeline(cb.get(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get());
+
   VkViewport viewport{};
   viewport.x        = 0.0f;
   viewport.y        = 0.0f;
@@ -293,34 +315,32 @@ void VulkanEngine::record(uint32_t image_index)
   viewport.height   = static_cast<float>(swapchain_.extent().height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(current_cb, 0, 1, &viewport);
+  vkCmdSetViewport(cb.get(), 0, 1, &viewport);
 
   VkRect2D scissor{};
   scissor.offset = { 0, 0 };
   scissor.extent = swapchain_.extent();
-  vkCmdSetScissor(current_cb, 0, 1, &scissor);
+  vkCmdSetScissor(cb.get(), 0, 1, &scissor);
 
-  vkCmdBindPipeline(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pipeline_.get());
+  vkCmdBindPipeline(cb.get(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get());
 
   VkBuffer     vertex_buffers[] = { vertex_buffer_.get() };
   VkDeviceSize offsets[]        = { 0 };
 
-  vkCmdBindVertexBuffers(current_cb, 0, 1, vertex_buffers, offsets);
-  vkCmdBindIndexBuffer(current_cb, index_buffer_.get(), 0,
-                       VK_INDEX_TYPE_UINT32);
+  vkCmdBindVertexBuffers(cb.get(), 0, 1, vertex_buffers, offsets);
+  vkCmdBindIndexBuffer(cb.get(), index_buffer_.get(), 0, VK_INDEX_TYPE_UINT32);
 
-  vkCmdBindDescriptorSets(current_cb, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdBindDescriptorSets(cb.get(), VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipeline_.layout(), 0, 1,
                           &descriptor_sets_[current_frame_], 0, nullptr);
 
-  vkCmdDrawIndexed(current_cb, static_cast<uint32_t>(indices_.size()), 1, 0, 0,
+  vkCmdDrawIndexed(cb.get(), static_cast<uint32_t>(indices_.size()), 1, 0, 0,
                    0);
 
-  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), current_cb);
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cb.get());
 
-  command_buffers_[current_frame_].endRenderPass();
-  command_buffers_[current_frame_].end();
+  cb.endRenderPass();
+  cb.end();
 }
 
 void VulkanEngine::updateUniformBuffer(uint32_t current_image)
@@ -363,27 +383,36 @@ void VulkanEngine::submitGeometry(const std::vector<Vec3f>& positions,
   index_buffer_  = Buffer(&device_, indices_, command_pool_);
 }
 
+void VulkanEngine::newFrame()
+{
+  ImGui_ImplVulkan_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+}
 void VulkanEngine::drawFrame()
 {
-  vkWaitForFences(device_.logical(), 1,
-                  &in_flight_fences_[current_frame_].get(), VK_TRUE,
-                  UINT64_MAX);
+  in_flight_fences_[current_frame_].wait();
 
   uint32_t image_index;
-  VkResult result = vkAcquireNextImageKHR(
-    device_.logical(), swapchain_.get(), UINT64_MAX,
-    image_available_sem_[current_frame_].get(), VK_NULL_HANDLE, &image_index);
+  VkResult result = swapchain_.acquireNextImage(image_index,
+                              image_available_sem_[current_frame_]);
+  //VkResult result = vkAcquireNextImageKHR(
+  //  device_.logical(), swapchain_.get(), UINT64_MAX,
+  //  image_available_sem_[current_frame_].get(), VK_NULL_HANDLE, &image_index);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     swapchain_.recreate(surface_, window_);
+    // VK_SUBOPTIMAL_KHR is considered a "success" so the return here should
+    // be removed if we also recreate the swapchain if it were suboptimal
     return;
   }
-  else if (result != VK_SUCCESS) {
+  // but instead we present anyway if the swapchain is suboptimal since the
+  // image is already acquired
+  else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     ThrowVk("Failed to acquire swapchain image!");
   }
 
-  vkResetFences(device_.logical(), 1, &in_flight_fences_[current_frame_].get());
-
+  in_flight_fences_[current_frame_].reset();
   command_buffers_[current_frame_].reset();
 
   record(image_index);

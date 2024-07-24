@@ -15,6 +15,8 @@ public:
 
   const VkFence& get() const { return fence_; }
   VkFence& get() { return fence_; }
+  void reset();
+  void wait();
 
 private:
   const Device* device_;

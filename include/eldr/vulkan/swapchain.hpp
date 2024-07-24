@@ -5,6 +5,7 @@
 #include <eldr/vulkan/image.hpp>
 #include <eldr/vulkan/imageview.hpp>
 #include <eldr/vulkan/renderpass.hpp>
+#include <eldr/vulkan/semaphore.hpp>
 
 namespace eldr {
 namespace vk {
@@ -26,7 +27,8 @@ public:
   uint32_t              minImageCount() const { return min_image_count_; }
   VkSampleCountFlagBits msaaSamples() const { return msaa_samples_; }
 
-  void recreate(Surface& surface, GLFWwindow* const window);
+  void     recreate(Surface& surface, GLFWwindow* const window);
+  VkResult acquireNextImage(uint32_t& index, Semaphore& image_available_sem);
 
 private:
   void createSwapchain(Surface&);

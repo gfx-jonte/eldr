@@ -186,6 +186,12 @@ void Swapchain::recreate(Surface& surface, GLFWwindow* const window)
   createImageViews();
   createFramebuffers();
 }
+VkResult Swapchain::acquireNextImage(uint32_t& index, Semaphore& semaphore) {
+  VkResult result = vkAcquireNextImageKHR(
+    device_->logical(), swapchain_, UINT64_MAX,
+    semaphore.get(), VK_NULL_HANDLE, &index);
+  return result;
+}
 
 // -----------------------------------------------------------------------------
 static VkSurfaceFormatKHR selectSwapSurfaceFormat(

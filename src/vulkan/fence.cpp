@@ -29,5 +29,12 @@ Fence::~Fence()
   if (fence_ != VK_NULL_HANDLE)
     vkDestroyFence(device_->logical(), fence_, nullptr);
 }
+
+void Fence::reset() { vkResetFences(device_->logical(), 1, &fence_); }
+
+void Fence::wait()
+{
+  vkWaitForFences(device_->logical(), 1, &fence_, VK_TRUE, UINT64_MAX);
+}
 } // namespace vk
 } // namespace eldr

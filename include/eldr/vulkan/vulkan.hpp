@@ -27,7 +27,9 @@ public:
   ~VulkanEngine();
 
   void initImGui();
+  void shutdownImGui();
 
+  void newFrame();
   void drawFrame();
   void submitGeometry(const std::vector<Vec3f>& positions,
                       const std::vector<Vec2f>& texcoords);
@@ -67,6 +69,7 @@ private:
   std::vector<Semaphore>       image_available_sem_;
   std::vector<Semaphore>       render_finished_sem_;
   std::vector<Fence>           in_flight_fences_;
+  // TODO: add frame/window structs
 };
 
 } // namespace vk
